@@ -50,9 +50,12 @@ module Twine
 
       def read_file(path, lang)
         resources_regex = /<resources(?:[^>]*)>(.*)<\/resources>/m
-        key_regex = /<string name="(\w+)">/
+        #matches either a string with an id, or a plural with an id
+        key_regex = /<string name="(\w+)">|<plurals name="(\w+)">/
         comment_regex = /<!-- (.*) -->/
         value_regex = /<string name="\w+">(.*)<\/string>/
+        #added the plurals as a separate regex for now, might merge in later
+        plurals_regex = /<plurals name="\w+">(.*)<\/plurals>/m
         key = nil
         value = nil
         comment = nil
@@ -63,17 +66,32 @@ module Twine
             for line in content_match[1].split(/\r?\n/)
               key_match = key_regex.match(line)
               if key_match
-                key = key_match[1]
-                value_match = value_regex.match(line)
-                if value_match
-                  value = value_match[1]
-                  value = CGI.unescapeHTML(value)
-                  value.gsub!('\\\'', '\'')
-                  value.gsub!('\\"', '"')
-                  value = iosify_substitutions(value)
-                  value.gsub!(/(\\u0020)*|(\\u0020)*\z/) { |spaces| ' ' * (spaces.length / 6) }
+
+                if !key_match[1].nil?
+                  key = key_match[1]
+                  value_match = value_regex.match(line)
+                  if value_match
+                    value = value_match[1]
+                    value = CGI.unescapeHTML(value)
+                    value.gsub!('\\\'', '\'')
+                    value.gsub!('\\"', '"')
+                    value = iosify_substitutions(value)
+                    value.gsub!(/(\\u0020)*|(\\u0020)*\z/) { |spaces| ' ' * (spaces.length / 6) }
+                  else
+                    #key matched a string, but no actual string inside, adding an empty string instead
+                    value = ""
+                  end
                 else
-                  value = ""
+                  if !key_match[2].nil?
+                    key = key_match[2]
+                    #matching a plural
+                    plurals_match = plurals_regex.match(line)
+                    if plurals_match
+                      value = plurals_match[1]
+                      puts "Plurals #{value}"
+                    else
+                    end
+                  end
                 end
                 set_translation_for_key(key, lang, value)
                 if comment and comment.length > 0 and !comment.start_with?("SECTION:")
@@ -101,7 +119,7 @@ module Twine
 
       def format_sections(lang)
         result = '<resources>'
-        
+
         result += super(lang) + "\n"
 
         result += '</resources>'
