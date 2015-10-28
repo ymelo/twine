@@ -171,19 +171,22 @@ module Twine
                 end
                 #test for plural format
                 plural_key = key.split(':')
-
+                quantity = nil
                 if !plural_key[1].nil?
                   key = plural_key[0]
-                  if current_row.translations[key].nil?
-                    current_row.translations[key] = Hash.new
-                  end
-                  current_row.translations[key][plural_key[1]] = value
+                  quantity = plural_key[1]
+                  # current_row.translations[key][plural_key[1]] = value
                   #puts "#{key}[#{plural_key[1]}] #{value}"
                 else
-                  #puts "#{key} #{value}"
-                  current_row.translations[key] = value
-                end
+                  quantity = ""
 
+                  # current_row.translations[key][""] = value
+                end
+                if current_row.translations[key].nil?
+                  current_row.translations[key] = Hash.new
+                end
+                current_row.translations[key][quantity] = value
+                puts "#{key} #{value}"
               end
               parsed = true
             end
@@ -204,7 +207,6 @@ module Twine
 
     def write(path)
       dev_lang = @language_codes[0]
-
       File.open(path, 'w:UTF-8') do |f|
         @sections.each do |section|
           if f.pos > 0
@@ -222,7 +224,7 @@ module Twine
             if !value && !row.reference_key
               puts "Warning: #{row.key} does not exist in developer language '#{dev_lang}'"
             end
-            
+
             if row.reference_key
               f.puts "\t\tref = #{row.reference_key}"
             end
@@ -244,17 +246,26 @@ module Twine
     private
 
     def write_value(row, language, file, reference)
-      value = row.translations[language]
-      return nil unless value
+      puts "Class #{row.translations[language].class}"
+      if !row.translations[language].nil?
+        row.translations[language].each do |quantity, value|
+          return nil unless value
 
-      if value[0] == ' ' || value[-1] == ' ' || (value[0] == '`' && value[-1] == '`')
-        value = '`' + value + '`'
-      end
+          if value[0] == ' ' || value[-1] == ' ' || (value[0] == '`' && value[-1] == '`')
+            value = '`' + value + '`'
+          end
 
-      if !reference or value != reference.translations[language]
-        file.puts "\t\t#{language} = #{value}"
+          if !reference or value != reference.translations[language]
+            if quantity.nil? || quantity == ""
+              file.puts "\t\t#{language} = #{value}"
+            else
+              file.puts "\t\t#{language}:#{quantity} = #{value}"
+            end
+
+          end
+          return value
+        end
       end
-      return value
     end
 
   end

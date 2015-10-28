@@ -66,10 +66,24 @@ module Twine
           return str
         end
       end
-      
+
       def set_translation_for_key(key, lang, value)
+        set_translation_for_key_with_quantity(key, "", lang, value)
+      end
+
+      def set_translation_value(key, lang, quantity, value)
+        if @strings.strings_map[key].translations[lang].nil?
+            @strings.strings_map[key].translations[lang] = Hash.new
+        end
+        @strings.strings_map[key].translations[lang][quantity] = value
+      end
+
+      def set_translation_for_key_with_quantity(key, lang, quantity, value)
+
         if @strings.strings_map.include?(key)
-          @strings.strings_map[key].translations[lang] = value
+          puts "EXITS #{key} #{lang}"
+          # @strings.strings_map[key].translations[lang] = value
+          set_translation_value(key, lang, quantity, value)
         elsif @options[:consume_all]
           STDERR.puts "Adding new string '#{key}' to strings data file."
           arr = @strings.sections.select { |s| s.name == 'Uncategorized' }
@@ -80,25 +94,19 @@ module Twine
           end
           current_row = StringsRow.new(key)
           current_section.rows << current_row
-          
+
           if @options[:tags] && @options[:tags].length > 0
-              current_row.tags = @options[:tags]            
+              current_row.tags = @options[:tags]
           end
-          
+
           @strings.strings_map[key] = current_row
-          @strings.strings_map[key].translations[lang] = value
+          set_translation_value(key, lang, quantity, value)
         else
           STDERR.puts "Warning: '#{key}' not found in strings data file."
         end
         if !@strings.language_codes.include?(lang)
           @strings.add_language_code(lang)
         end
-      end
-
-      def set_plural_translation_for_key(key, lang, modifier, value)
-        lang += ":"
-        lang += modifier
-        set_translation_for_key(key, lang, value)
       end
 
       def set_comment_for_key(key, comment)

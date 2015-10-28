@@ -125,8 +125,7 @@ module Twine
               value = item_match[2]
               modifier = item_match[1]
               unformat_value(value)
-              puts "#{key} #{lang} #{modifier} #{value}"
-              set_plural_translation_for_key(key, lang, modifier, value)
+              set_translation_for_key_with_quantity(key, lang, modifier, value)
             else
               #nothing to add, non matching line (blank?)
             end
