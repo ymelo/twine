@@ -142,6 +142,10 @@ module Twine
         "\t<string name=\"%{key}\">%{value}</string>"
       end
 
+      def key_plural_value_pattern
+        "\t<plurals name=\"%{key}\">\n%{value}\t</plurals>"
+      end
+
       def unformat_value(value)
         value = CGI.unescapeHTML(value)
         value.gsub!('\\\'', '\'')
@@ -161,6 +165,20 @@ module Twine
         value = androidify_substitutions(value)
         #  4) replace beginning and end spaces with \0020. Otherwise Android strips them.
         value.gsub(/\A *| *\z/) { |spaces| '\u0020' * spaces.length }
+      end
+
+      def format_plurals(values)
+        result = String.new
+        values.each {|key, value| result << "\t\t<item name=\"#{key}\">#{value}</item>\n"}
+        return result
+      end
+
+      def format(key, value)
+        if value.is_a?(Hash)
+          key_plural_value_pattern % { key: format_key(key), value: format_plurals(value)}
+        else
+          key_value_pattern % { key: format_key(key), value: format_value(value) }
+        end
       end
 
     end

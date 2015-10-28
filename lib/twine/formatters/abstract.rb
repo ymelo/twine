@@ -114,7 +114,9 @@ module Twine
       end
 
       def default_language
-        @options[:developer_language] || @strings.language_codes[0]
+        #split the string so we can handle plurals such as en:one en:other en..
+        #if not a plural it will return the full lang name
+        @options[:developer_language] || @strings.language_codes[0].split(':')[0]
       end
 
       def fallback_languages(lang)
@@ -171,8 +173,14 @@ module Twine
           comment = format_comment(row.comment)
           result += comment + "\n" if comment
         end
+        #result += key_value_pattern % { key: format_key(row.key.dup), value: format_all_values(value.dup) }
+        result += format row.key.dup, value.dup
+        puts result
+      end
 
-        result += key_value_pattern % { key: format_key(row.key.dup), value: format_value(value.dup) }
+      def format(key, value)
+        #default behaviour
+        return key_value_pattern % { key: format_key(key), value: format_value(value) }
       end
 
       def format_comment(comment)
@@ -184,6 +192,18 @@ module Twine
 
       def format_key(key)
         key
+      end
+
+      def format_all_values(values)
+        if values.is_a?(Hash)
+          flattenedValue = String.new
+          values.each do |value|
+            flattenedValue << "\n"
+            flattenedValue << format_value(value)
+          end
+        else
+          return format_value(values)
+        end
       end
 
       def format_value(value)

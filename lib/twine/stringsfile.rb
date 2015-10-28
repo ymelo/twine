@@ -169,7 +169,21 @@ module Twine
                 if !@language_codes.include? key
                   add_language_code(key)
                 end
-                current_row.translations[key] = value
+                #test for plural format
+                plural_key = key.split(':')
+
+                if !plural_key[1].nil?
+                  key = plural_key[0]
+                  if current_row.translations[key].nil?
+                    current_row.translations[key] = Hash.new
+                  end
+                  current_row.translations[key][plural_key[1]] = value
+                  #puts "#{key}[#{plural_key[1]}] #{value}"
+                else
+                  #puts "#{key} #{value}"
+                  current_row.translations[key] = value
+                end
+
               end
               parsed = true
             end
