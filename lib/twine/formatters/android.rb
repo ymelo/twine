@@ -169,7 +169,7 @@ module Twine
 
       def format_plurals(values)
         result = String.new
-        values.each {|key, value| result << "\t\t<item name=\"#{key}\">#{value}</item>\n"}
+        values.each {|key, value| result << "\t\t<item quantity=\"#{key}\">#{value}</item>\n"}
         return result
       end
 
