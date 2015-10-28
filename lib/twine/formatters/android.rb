@@ -50,10 +50,10 @@ module Twine
 
       def read_file(path, lang)
         resources_regex = /<resources(?:[^>]*)>(.*)<\/resources>/m
-        #matches either a string with an id, or a plural with an id
-        key_regex = /<string name="(\w+)">|<plurals name="(\w+)">/
+        string_regex = /<string name="(\w+)">/
+        plurals_regex = /<plurals name="(\w+)">/
         comment_regex = /<!-- (.*) -->/
-        value_regex = /<string name="\w+">(.*)<\/string>/
+
 
         key = nil
         value = nil
@@ -62,38 +62,30 @@ module Twine
         File.open(path, 'r:UTF-8') do |f|
           content_match = resources_regex.match(f.read)
           if content_match
-            for line in content_match[1].split(/(<\/string>\r?\n|<\/plurals>\r?\n)/).each_slice(2).map(&:join)#split(/<\/string>\r?\n/)#|(?=<<\/plurals>\r?\n)/)
-              key_match = key_regex.match(line)
-              #puts "New line"
-              puts "---------"
+            for line in content_match[1].split(/(<\/string>\r?\n|<\/plurals>\r?\n)/).each_slice(2).map(&:join)
+              key_match = string_regex.match(line)
               if key_match
-                #puts key_match[1]
-                if !key_match[1].nil?
-                  key = key_match[1]
-                  value_match = value_regex.match(line)
-                  if value_match
-                    value = value_match[1]
-                    unformat_value value
-                  else
-                    #key matched a string, but no actual string inside, adding an empty string instead
-                    value = ""
-                  end
-                  set_translation_for_key(key, lang, value)
-                else
-                  #puts "line: #{line}"
-                  modifier = nil
-                  if !key_match[2].nil?
-                    read_plural(key_match[2], lang, line)
-                  end
-                end
-                #puts "#{key} #{value}"
-
+                #matched a string
+                key = key_match[1]
+                read_string(key, lang, line)
                 if comment and comment.length > 0 and !comment.start_with?("SECTION:")
                   set_comment_for_key(key, comment)
                 end
                 comment = nil
+              else
+                #did not match a string, trying plurals
+                key_match = plurals_regex.match(line)
+                if key_match
+                  #matched a plural
+                  if !key_match[1].nil?
+                    read_plural(key_match[1], lang, line)
+                  end
+                  if comment and comment.length > 0 and !comment.start_with?("SECTION:")
+                    set_comment_for_key(key, comment)
+                  end
+                  comment = nil
+                end
               end
-
               comment_match = comment_regex.match(line)
               if comment_match
                 comment = comment_match[1]
@@ -103,11 +95,22 @@ module Twine
         end
       end
 
+      def read_string(key, lang, line)
+        value_regex = /<string name="\w+">(.*)<\/string>/
+        value_match = value_regex.match(line)
+        if value_match
+          value = value_match[1]
+          unformat_value value
+        else
+          #key matched a string, but no actual string inside, adding an empty string instead
+          value = ""
+        end
+        set_translation_for_key(key, lang, value)
+      end
+
       def read_plural(key, lang, plural)
         plural_regex = /<plurals name="(\w+)">(.*)<\/plurals>/m
-
         plural_match = plural_regex.match(plural)
-
         #make sure that we have a plural here
         if plural_match
           key = plural_match[1]
