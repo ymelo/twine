@@ -63,37 +63,42 @@ module Twine
         File.open(path, 'r:UTF-8') do |f|
           content_match = resources_regex.match(f.read)
           if content_match
-            for line in content_match[1].split(/\r?\n/)
+            for line in content_match[1].split(/(<\/string>\r?\n|<\/plurals>\r?\n)/).each_slice(2).map(&:join)#split(/<\/string>\r?\n/)#|(?=<<\/plurals>\r?\n)/)
               key_match = key_regex.match(line)
+              #puts "New line"
+              puts "---------"
+              # puts line
               if key_match
-
+                #puts key_match[1]
                 if !key_match[1].nil?
                   key = key_match[1]
                   value_match = value_regex.match(line)
                   if value_match
                     value = value_match[1]
-                    value = CGI.unescapeHTML(value)
-                    value.gsub!('\\\'', '\'')
-                    value.gsub!('\\"', '"')
-                    value = iosify_substitutions(value)
-                    value.gsub!(/(\\u0020)*|(\\u0020)*\z/) { |spaces| ' ' * (spaces.length / 6) }
+                    unformat_value value
                   else
                     #key matched a string, but no actual string inside, adding an empty string instead
                     value = ""
                   end
                 else
+                  #puts "line: #{line}"
                   if !key_match[2].nil?
                     key = key_match[2]
+                    puts key
                     #matching a plural
                     plurals_match = plurals_regex.match(line)
                     if plurals_match
+                      #Store the whole plural block into a string, need to decide on the output format
                       value = plurals_match[1]
-                      puts "Plurals #{value}"
+                      unformat_value value
                     else
+                      value = ""
                     end
+
                   end
                 end
-                set_translation_for_key(key, lang, value)
+                puts "#{key} #{value}"
+                #set_translation_for_key(key, lang, value)
                 if comment and comment.length > 0 and !comment.start_with?("SECTION:")
                   set_comment_for_key(key, comment)
                 end
@@ -135,6 +140,14 @@ module Twine
 
       def key_value_pattern
         "\t<string name=\"%{key}\">%{value}</string>"
+      end
+
+      def unformat_value(value)
+        value = CGI.unescapeHTML(value)
+        value.gsub!('\\\'', '\'')
+        value.gsub!('\\"', '"')
+        value = iosify_substitutions(value)
+        value.gsub!(/(\\u0020)*|(\\u0020)*\z/) { |spaces| ' ' * (spaces.length / 6) }
       end
 
       def format_value(value)
