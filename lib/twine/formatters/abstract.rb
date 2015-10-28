@@ -95,6 +95,12 @@ module Twine
         end
       end
 
+      def set_plural_translation_for_key(key, lang, modifier, value)
+        lang += ":"
+        lang += modifier
+        set_translation_for_key(key, lang, value)
+      end
+
       def set_comment_for_key(key, comment)
         if @strings.strings_map.include?(key)
           @strings.strings_map[key].comment = comment

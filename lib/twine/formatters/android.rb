@@ -54,8 +54,7 @@ module Twine
         key_regex = /<string name="(\w+)">|<plurals name="(\w+)">/
         comment_regex = /<!-- (.*) -->/
         value_regex = /<string name="\w+">(.*)<\/string>/
-        #added the plurals as a separate regex for now, might merge in later
-        plurals_regex = /<plurals name="\w+">(.*)<\/plurals>/m
+
         key = nil
         value = nil
         comment = nil
@@ -67,7 +66,6 @@ module Twine
               key_match = key_regex.match(line)
               #puts "New line"
               puts "---------"
-              # puts line
               if key_match
                 #puts key_match[1]
                 if !key_match[1].nil?
@@ -80,25 +78,16 @@ module Twine
                     #key matched a string, but no actual string inside, adding an empty string instead
                     value = ""
                   end
+                  set_translation_for_key(key, lang, value)
                 else
                   #puts "line: #{line}"
+                  modifier = nil
                   if !key_match[2].nil?
-                    key = key_match[2]
-                    puts key
-                    #matching a plural
-                    plurals_match = plurals_regex.match(line)
-                    if plurals_match
-                      #Store the whole plural block into a string, need to decide on the output format
-                      value = plurals_match[1]
-                      unformat_value value
-                    else
-                      value = ""
-                    end
-
+                    read_plural(key_match[2], lang, line)
                   end
                 end
-                puts "#{key} #{value}"
-                #set_translation_for_key(key, lang, value)
+                #puts "#{key} #{value}"
+
                 if comment and comment.length > 0 and !comment.start_with?("SECTION:")
                   set_comment_for_key(key, comment)
                 end
@@ -113,6 +102,41 @@ module Twine
           end
         end
       end
+
+      def read_plural(key, lang, plural)
+        plural_regex = /<plurals name="(\w+)">(.*)<\/plurals>/m
+
+        plural_match = plural_regex.match(plural)
+
+        #make sure that we have a plural here
+        if plural_match
+          key = plural_match[1]
+          #added the plurals as a separate regex for now, might merge in later
+          item_regex = /<item quantity="(\w+)">(.*)<\/item>/
+          for line in plural_match[2].split(/\r?\n/)
+            #puts line
+            #matching a plural
+            item_match = item_regex.match(line)
+            if item_match
+              #Store the whole plural block into a string, need to decide on the output format
+              value = item_match[2]
+              modifier = item_match[1]
+              unformat_value(value)
+              puts "#{key} #{lang} #{modifier} #{value}"
+              set_plural_translation_for_key(key, lang, modifier, value)
+            else
+              #nothing to add, non matching line (blank?)
+            end
+
+          end
+        end
+
+
+      end
+
+      # def set_plural_translation_for_key(key, lang, modifier, plurals)
+      #   set_translation_for_key(key << "_" << modifier, lang, value)
+      # end
 
       def fallback_languages(lang)
         [DEFAULT_LANG_CODES[lang], super].flatten.compact
