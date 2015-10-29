@@ -247,14 +247,13 @@ module Twine
       if !row.translations[language].nil?
         joinedValues = String.new
         row.translations[language].each do |quantity, value|
-          puts "\t\t#{language}:#{quantity} = #{value}"
           return nil unless value
 
           if value[0] == ' ' || value[-1] == ' ' || (value[0] == '`' && value[-1] == '`')
             value = '`' + value + '`'
           end
 
-          if !reference or value != reference.translations[language]
+          if !reference or value != reference.translations[language][quantity]
             if quantity.nil? || quantity == ""
               file.puts "\t\t#{language} = #{value}"
             else
