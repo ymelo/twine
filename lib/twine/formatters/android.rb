@@ -62,33 +62,33 @@ module Twine
         File.open(path, 'r:UTF-8') do |f|
           content_match = resources_regex.match(f.read)
           if content_match
+            #comments will be caught in the same 'line' (actually more than just a line) as the strings themselves
             for line in content_match[1].split(/(<\/string>\r?\n|<\/plurals>\r?\n)/).each_slice(2).map(&:join)
               key_match = string_regex.match(line)
               if key_match
                 #matched a string
                 key = key_match[1]
                 read_string(key, lang, line)
-                if comment and comment.length > 0 and !comment.start_with?("SECTION:")
-                  set_comment_for_key(key, comment)
-                end
-                comment = nil
               else
                 #did not match a string, trying plurals
                 key_match = plurals_regex.match(line)
                 if key_match
+                  key = key_match[1]
                   #matched a plural
                   if !key_match[1].nil?
                     read_plural(key_match[1], lang, line)
                   end
-                  if comment and comment.length > 0 and !comment.start_with?("SECTION:")
-                    set_comment_for_key(key, comment)
-                  end
-                  comment = nil
                 end
               end
+              #tries to find a comment on the same block of text as the string.
+              #The comment has to come before the ending tag (string of plurals)
               comment_match = comment_regex.match(line)
               if comment_match
                 comment = comment_match[1]
+                if comment and comment.length > 0 and !comment.start_with?("SECTION:")
+                  set_comment_for_key(key, comment)
+                end
+                comment = nil
               end
             end
           end
