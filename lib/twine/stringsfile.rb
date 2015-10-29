@@ -175,12 +175,9 @@ module Twine
                 quantity = nil
                 if !plural_key[1].nil?
                   key = plural_key[0]
-
                   quantity = plural_key[1]
-                  # current_row.translations[key][plural_key[1]] = value
                 else
                   quantity = ""
-                  # current_row.translations[key][""] = value
                 end
                 if current_row.translations[key].nil?
                   current_row.translations[key] = Hash.new

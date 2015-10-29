@@ -28,6 +28,11 @@ module Twine
       end
 
       def read_file(path, lang)
+        #parse_string_file(path, lang)
+        parse_stringdict_file(path, lang)
+      end
+
+      def parse_string_file(path, lang)
         encoding = Twine::Encoding.encoding_for_path(path)
         sep = nil
         if !encoding.respond_to?(:encode)
@@ -47,6 +52,7 @@ module Twine
           mode = "r:#{encoding}"
         end
 
+        fileType = File.extname(path)
         File.open(path, mode) do |f|
           last_comment = nil
           while line = (sep) ? f.gets(sep) : f.gets
@@ -61,11 +67,8 @@ module Twine
             match = /"((?:[^"\\]|\\.)+)"\s*=\s*"((?:[^"\\]|\\.)*)"/.match(line)
             if match
               key = match[1]
-              key.gsub!('\\"', '"')
               value = match[2]
-              value.gsub!('\\"', '"')
-              value = iosify_substitutions(value)
-              set_translation_for_key(key, lang, value)
+              read_string(key, lang, value)
               if last_comment
                 set_comment_for_key(key, last_comment)
               end
@@ -80,6 +83,71 @@ module Twine
             end
           end
         end
+      end
+
+      def parse_stringdict_file(path, lang)
+        encoding = Twine::Encoding.encoding_for_path(path)
+        if encoding.index('UTF-16')
+          mode = "rb:#{encoding}"
+        else
+          mode = "r:#{encoding}"
+        end
+
+        doc = Nokogiri::XML(File.open(path)) do |config|
+          config.strict.nonet
+          config.strict.noblanks
+        end
+        #root_dict will contain the whole working documents (excluding the xml, namespace, and plist delcaration)
+        root_dict = doc.xpath("/plist/dict")
+        string_keys = nil
+        string_dicts = nil
+        string = nil
+        variable_name = nil
+        variable_dict_keys = nil
+        variable_dict_strings = nil
+
+        root_dict.each do | t |
+          string_keys = t.xpath("key")
+          string_dicts = t.xpath("dict")
+        end
+        if string_keys.size == string_dicts.size
+          for i in 0..string_keys.size
+            if !string_keys[i].nil?
+              key = string_keys[i].inner_text
+              dicts = string_dicts[i]
+              if !dicts.nil?
+                string = dicts.xpath("string")
+                variable_name = dicts.xpath("key")[1].inner_text
+                variable_dict_keys = dicts.xpath("dict/key")
+                variable_dict_strings = dicts.xpath("dict/string")
+                if variable_dict_keys.size == variable_dict_strings.size
+                  for j in 0..variable_dict_keys.size
+                    if !variable_dict_keys[j].nil? && !variable_dict_keys[j].inner_text.start_with?("NSS")
+                      value = string.inner_text
+                      value["\%\#\@#{variable_name}\@"] = variable_dict_strings[j]
+                      #puts "Adding #{key} #{lang} #{variable_dict_keys[j].inner_text} #{value}"
+                      set_translation_for_key_with_quantity(key, lang, variable_dict_keys[j].inner_text, value)
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+
+
+
+      end
+
+      def read_string(key, lang, value)
+        key.gsub!('\\"', '"')
+        value.gsub!('\\"', '"')
+        value = iosify_substitutions(value)
+        set_translation_for_key(key, lang, value)
+      end
+
+      def read_plural
+
       end
 
       def format_header(lang)
