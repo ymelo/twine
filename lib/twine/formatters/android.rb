@@ -200,13 +200,12 @@ module Twine
       end
 
       def format(key, value)
-        if value.is_a?(Hash)
-          key_plural_value_pattern % { key: format_key(key), value: format_plurals(value)}
+        if !value.has_key? ""
+          return key_plural_value_pattern % { key: format_key(key), value: format_plurals(value)}
         else
-          key_value_pattern % { key: format_key(key), value: format_value(value) }
+          return key_value_pattern % { key: format_key(key), value: format_value(value[""]) }
         end
       end
-
     end
   end
 end

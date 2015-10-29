@@ -189,7 +189,6 @@ module Twine
         end
         #result += key_value_pattern % { key: format_key(row.key.dup), value: format_all_values(value.dup) }
         result += format row.key.dup, value.dup
-        puts result
       end
 
       def format(key, value)
