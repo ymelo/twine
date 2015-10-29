@@ -68,7 +68,7 @@ module Twine
       end
 
       def set_translation_for_key(key, lang, value)
-        set_translation_for_key_with_quantity(key, "", lang, value)
+        set_translation_for_key_with_quantity(key, lang, "", value)
       end
 
       def set_translation_value(key, lang, quantity, value)
@@ -81,7 +81,7 @@ module Twine
       def set_translation_for_key_with_quantity(key, lang, quantity, value)
 
         if @strings.strings_map.include?(key)
-          puts "EXITS #{key} #{lang}"
+          #puts "EXIST #{key} #{lang} #{quantity}"
           # @strings.strings_map[key].translations[lang] = value
           set_translation_value(key, lang, quantity, value)
         elsif @options[:consume_all]
