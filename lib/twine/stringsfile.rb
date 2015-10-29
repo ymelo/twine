@@ -176,7 +176,6 @@ module Twine
                   key = plural_key[0]
                   quantity = plural_key[1]
                   # current_row.translations[key][plural_key[1]] = value
-                  #puts "#{key}[#{plural_key[1]}] #{value}"
                 else
                   quantity = ""
 
@@ -186,7 +185,6 @@ module Twine
                   current_row.translations[key] = Hash.new
                 end
                 current_row.translations[key][quantity] = value
-                #puts "#{key} #{value}"
               end
               parsed = true
             end
