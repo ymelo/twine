@@ -192,8 +192,11 @@ module Twine
       end
 
       def format(key, value)
-        #default behaviour
-        return key_value_pattern % { key: format_key(key), value: format_value(value) }
+        if !value.has_key? ""
+          return key_plural_value_pattern % { key: format_key(key), value: format_plurals(value)}
+        else
+          return key_value_pattern % { key: format_key(key), value: format_value(value[""]) }
+        end
       end
 
       def format_comment(comment)
@@ -201,6 +204,10 @@ module Twine
 
       def key_value_pattern
         raise NotImplementedError.new("You must implement key_value_pattern in your formatter class.")
+      end
+
+      def key_plural_value_pattern
+          raise NotImplementedError.new("You must implement key_plural_value_pattern in your formatter class.")
       end
 
       def format_key(key)
