@@ -186,7 +186,7 @@ module Twine
                   current_row.translations[key] = Hash.new
                 end
                 current_row.translations[key][quantity] = value
-                puts "#{key} #{value}"
+                #puts "#{key} #{value}"
               end
               parsed = true
             end
@@ -246,9 +246,10 @@ module Twine
     private
 
     def write_value(row, language, file, reference)
-      puts "Class #{row.translations[language].class}"
       if !row.translations[language].nil?
+        joinedValues = String.new
         row.translations[language].each do |quantity, value|
+          puts "\t\t#{language}:#{quantity} = #{value}"
           return nil unless value
 
           if value[0] == ' ' || value[-1] == ' ' || (value[0] == '`' && value[-1] == '`')
@@ -259,12 +260,13 @@ module Twine
             if quantity.nil? || quantity == ""
               file.puts "\t\t#{language} = #{value}"
             else
+              #puts "Writting \t\t#{language}:#{quantity} = #{value}"
               file.puts "\t\t#{language}:#{quantity} = #{value}"
             end
-
+            joinedValues += value
           end
-          return value
         end
+        return joinedValues
       end
     end
 
