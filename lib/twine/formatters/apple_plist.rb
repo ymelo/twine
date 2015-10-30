@@ -22,10 +22,15 @@ module Twine
       end
 
       def read_file(path, lang)
+        begin
+          require "nokogiri"
+        rescue LoadError
+          raise Twine::Error.new "You must run 'gem install nokogiri' in order to read or write stringsdict files."
+        end
         #.stringsdict only handles plurals
         parse_stringdict_file(path, lang)
       end
-      
+
       def parse_stringdict_file(path, lang)
         doc = Nokogiri::XML(File.open(path)) do |config|
           config.strict.nonet

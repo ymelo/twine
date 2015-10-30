@@ -132,6 +132,15 @@ class TwineTest < Test::Unit::TestCase
     end
   end
 
+  def test_consume_string_file_plurals
+    Dir.mktmpdir do |dir|
+      output_path = File.join(dir, 'plurals_output.txt')
+      puts output_path
+      Twine::Runner.run(%W(consume-string-file test/fixtures/plurals_input_1.txt test/fixtures/strings.stringsdict -o #{output_path} -l en))
+      assert_equal(File.read('test/fixtures/test-output-plurals-1.txt'), File.read(output_path))
+    end
+  end
+
   def test_json_line_breaks_generate
     Dir.mktmpdir do |dir|
       output_path = File.join(dir, 'en.json')
@@ -154,5 +163,13 @@ class TwineTest < Test::Unit::TestCase
       Twine::Runner.run(%W(generate-string-file test/fixtures/strings-4-references.txt #{output_path} -l fr -t tag1))
       assert_equal(ERB.new(File.read('test/fixtures/test-output-14-references.txt')).result, File.read(output_path))
     end
-  end  
+  end
+
+  def test_generate_plural_string_file_1
+    Dir.mktmpdir do |dir|
+      output_path = File.join(dir, 'plurals_output.stringsdict')
+      Twine::Runner.run(%W(generate-string-file test/fixtures/plurals_input_2.txt #{output_path} -l en -t plurals))
+      assert_equal(ERB.new(File.read('test/fixtures/plurals_expected_output.txt')).result, File.read(output_path))
+    end
+  end
 end
