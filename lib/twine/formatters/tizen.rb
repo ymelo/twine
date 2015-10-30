@@ -134,10 +134,11 @@ module Twine
 
                 key = row.key
 
-                value = row.translated_string_for_lang(lang, default_lang)
-                if !value && !@options[:exclude_untranslated]
-                  value = row.translated_string_for_lang(@strings.language_codes[0])
+                hash_value = row.translated_string_for_lang(lang, default_lang)
+                if !hash_value && !@options[:exclude_untranslated]
+                  hash_value = row.translated_string_for_lang(@strings.language_codes[0])
                 end
+                value = hash_value[""]
 
                 if value # if values is nil, there was no appropriate translation, so let Tizen handle the defaulting
                   value = String.new(value) # use a copy to prevent modifying the original

@@ -78,7 +78,7 @@ module Twine
                   printed_section = true
                 end
 
-                basetrans = row.translated_string_for_lang(default_lang)
+                basetrans = row.translated_string_for_lang(default_lang)[""]
 
                 if basetrans
                   key = row.key
@@ -94,7 +94,7 @@ module Twine
                   end
 
                   f.print "msgctxt \"#{key}\"\nmsgid \"#{basetrans}\"\n"
-                  value = row.translated_string_for_lang(lang)
+                  value = row.translated_string_for_lang(lang)[""] #supports only the non plural version
                   if value
                     value = value.gsub('"', '\\\\"')
                   end

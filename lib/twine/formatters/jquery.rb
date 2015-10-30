@@ -70,7 +70,7 @@ module Twine
                 key = row.key
                 key = key.gsub('"', '\\\\"')
 
-                value = row.translated_string_for_lang(lang, default_lang)
+                value = row.translated_string_for_lang(lang, default_lang)[""] #supports only the nonplural version
                 value = value.gsub('"', '\\\\"')
 
                 f.print "\"#{key}\":\"#{value}\""
