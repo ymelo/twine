@@ -1,3 +1,4 @@
+require 'nokogiri'
 module Twine
   module Formatters
     class Apple < Abstract
