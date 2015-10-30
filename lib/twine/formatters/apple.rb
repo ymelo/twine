@@ -1,4 +1,3 @@
-require 'nokogiri'
 module Twine
   module Formatters
     class Apple < Abstract
@@ -29,8 +28,9 @@ module Twine
       end
 
       def read_file(path, lang)
-        #parse_string_file(path, lang)
-        parse_stringdict_file(path, lang)
+        #.strings only handles simple Strings
+        #for plural string, use .stringsdict (Apple_plist)
+        parse_string_file(path, lang)
       end
 
       def parse_string_file(path, lang)
@@ -86,59 +86,6 @@ module Twine
         end
       end
 
-      def parse_stringdict_file(path, lang)
-        encoding = Twine::Encoding.encoding_for_path(path)
-        if encoding.index('UTF-16')
-          mode = "rb:#{encoding}"
-        else
-          mode = "r:#{encoding}"
-        end
-
-        doc = Nokogiri::XML(File.open(path)) do |config|
-          config.strict.nonet
-          config.strict.noblanks
-        end
-        #root_dict will contain the whole working documents (excluding the xml, namespace, and plist delcaration)
-        root_dict = doc.xpath("/plist/dict")
-        string_keys = nil
-        string_dicts = nil
-        string = nil
-        variable_name = nil
-        variable_dict_keys = nil
-        variable_dict_strings = nil
-
-        root_dict.each do | t |
-          string_keys = t.xpath("key")
-          string_dicts = t.xpath("dict")
-        end
-        if string_keys.size == string_dicts.size
-          for i in 0..string_keys.size
-            if !string_keys[i].nil?
-              key = string_keys[i].inner_text
-              dicts = string_dicts[i]
-              if !dicts.nil?
-                string = dicts.xpath("string")
-                variable_name = dicts.xpath("key")[1].inner_text
-                variable_dict_keys = dicts.xpath("dict/key")
-                variable_dict_strings = dicts.xpath("dict/string")
-                if variable_dict_keys.size == variable_dict_strings.size
-                  for j in 0..variable_dict_keys.size
-                    if !variable_dict_keys[j].nil? && !variable_dict_keys[j].inner_text.start_with?("NSS")
-                      value = string.inner_text
-                      value["\%\#\@#{variable_name}\@"] = variable_dict_strings[j]
-                      key.gsub!('\\"', '"')
-                      value.gsub!('\\"', '"')
-                      value = iosify_substitutions(value)
-                      set_translation_for_key_with_quantity(key, lang, variable_dict_keys[j].inner_text, value)
-                    end #if
-                  end #for
-                end #if size
-              end #if dicts nil
-            end #if strings key[i] nil
-          end # for
-        end # if size
-      end
-
       def read_string(key, lang, value)
         key.gsub!('\\"', '"')
         value.gsub!('\\"', '"')
@@ -163,11 +110,12 @@ module Twine
       end
 
       def key_plural_value_pattern
+        #\\U0025 is % in unicode, used to avoid some parsing error related to string patterns
 "\t<dict>
 \t\t<key>%{key}</key>
 \t\t<dict>
 \t\t\t<key>NSStringLocalizedFormatKey</key>
-\t\t\t<string>\\u0025\#\@simple_plural_by_twine\@</string>
+\t\t\t<string>\\U0025\#\@simple_plural_by_twine\@</string>
 \t\t\t<key>simple_plural_by_twine</key>
 %{value}
 \t\t</dict>
