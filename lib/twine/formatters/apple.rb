@@ -126,18 +126,17 @@ module Twine
                     if !variable_dict_keys[j].nil? && !variable_dict_keys[j].inner_text.start_with?("NSS")
                       value = string.inner_text
                       value["\%\#\@#{variable_name}\@"] = variable_dict_strings[j]
-                      #puts "Adding #{key} #{lang} #{variable_dict_keys[j].inner_text} #{value}"
+                      key.gsub!('\\"', '"')
+                      value.gsub!('\\"', '"')
+                      value = iosify_substitutions(value)
                       set_translation_for_key_with_quantity(key, lang, variable_dict_keys[j].inner_text, value)
-                    end
-                  end
-                end
-              end
-            end
-          end
-        end
-
-
-
+                    end #if
+                  end #for
+                end #if size
+              end #if dicts nil
+            end #if strings key[i] nil
+          end # for
+        end # if size
       end
 
       def read_string(key, lang, value)
