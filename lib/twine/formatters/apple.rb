@@ -162,6 +162,26 @@ module Twine
         "\"%{key}\" = \"%{value}\";\n"
       end
 
+      def key_plural_value_pattern
+"\t<dict>
+\t\t<key>%{key}</key>
+\t\t<dict>
+\t\t\t<key>NSStringLocalizedFormatKey</key>
+\t\t\t<string>\\u0025\#\@simple_plural_by_twine\@</string>
+\t\t\t<key>simple_plural_by_twine</key>
+%{value}
+\t\t</dict>
+\t</dict>"
+      end
+
+      def plural_dict_pattern
+"\t\t\t<dict>
+\t\t\t\t<key>NSStringFormatSpecTypeKey</key>
+\t\t\t\t<string>NSStringPluralRuleType</string>
+\t\t\t\t<key>NSStringFormatValueTypeKey</key>
+\t\t\t\t%{plurals}
+\t\t\t</dict>"
+      end
       def format_comment(comment)
         "/* #{comment.gsub('*/', '* /')} */"
       end
@@ -172,6 +192,15 @@ module Twine
 
       def format_value(value)
         escape_quotes(value)
+      end
+
+      def format_plurals(values)
+        result = String.new
+        nsstring_format_value_type_key = "<string>d</string>"
+        values.each {|qt, value|
+           result << "\n\t\t\t\t<key>#{qt}<\/key>\n\t\t\t\t<string>#{value}<\/string>"
+         }
+         return plural_dict_pattern % { plurals: nsstring_format_value_type_key + result}
       end
 
       def escape_quotes(text)
